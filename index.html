@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Guided Wellness</title>
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        
+        /* Smooth View Transitions */
+        .view-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Modern Card */
+        .modern-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        .modern-card:active { transform: scale(0.98); }
+        
+        /* Utils */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .timer-ring-circle { transition: stroke-dashoffset 1s linear; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm z-30 shrink-0">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">🌱</div>
+            <h1 class="font-bold text-lg text-slate-800">The Guided Wellness</h1>
+        </div>
+        <div class="flex gap-2">
+            <button id="pwa-install" class="hidden text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-bold">Install</button>
+            <button onclick="toggleSettings()" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full">⚙️</button>
+        </div>
+    </header>
+
+    <main class="flex-1 relative overflow-hidden bg-slate-50">
+        
+        <div id="view-dashboard" class="absolute inset-0 overflow-y-auto pb-20 z-10">
+            <div class="p-6">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 text-center">Good Day :)</h2>
+                    <p class="text-slate-500 text-sm text-center">Select a guide to begin your habits.</p>
+                </div>
+
+                <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-8"></div>
+            </div>
+
+            
+        </div>
+
+        <div id="view-details" class="absolute inset-0 bg-white z-20 transform translate-x-full view-transition flex flex-col h-full">
+            <div class="p-4 border-b border-gray-100 flex items-center gap-2 bg-white shrink-0">
+                <button onclick="goBack()" class="p-2 -ml-2 hover:bg-gray-100 rounded-full text-slate-600 font-bold flex items-center gap-1">
+                    <span class="text-xl">←</span> Back
+                </button>
+            </div>
+
+            <div id="detail-content" class="flex-1 overflow-y-auto p-5 pb-32">
+                </div>
+
+            <div class="absolute bottom-0 left-0 w-full p-4 bg-white border-t border-gray-100 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-30">
+                <button id="btn-start" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+                    <span>▶</span> Start Session
+                </button>
+            </div>
+        </div>
+
+        <div id="view-player" class="absolute inset-0 bg-white z-40 hidden flex-col h-full">
+            <div class="p-4 flex justify-between items-center shrink-0 border-b border-gray-50 bg-white">
+                <div class="w-10"></div> <div class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-full">Now Playing</div>
+                <button onclick="endSession()" class="text-white bg-red-500 hover:bg-red-600 font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm">End</button>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto bg-slate-50/50">
+                <div class="w-full max-w-md">
+                    
+                    <h2 id="step-title" class="text-2xl font-bold text-slate-800 mb-2 mt-4">Step Name</h2>
+                    
+                    <div class="bg-white border border-slate-200 p-6 rounded-2xl mb-8 min-h-[140px] flex items-center justify-center shadow-sm relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gray-100">
+                            <div id="step-progress-bar" class="h-full bg-indigo-500 w-0 transition-all duration-300"></div>
+                        </div>
+                        <p id="step-text" class="text-lg text-slate-600 leading-relaxed font-medium">Instruction text...</p>
+                    </div>
+
+                    <div id="timer-container" class="relative w-48 h-48 mx-auto mb-8 flex items-center justify-center">
+                        <svg class="absolute inset-0 w-full h-full transform -rotate-90 text-indigo-600">
+                            <circle cx="96" cy="96" r="88" stroke="#e2e8f0" stroke-width="6" fill="transparent" />
+                            <circle id="timer-ring" cx="96" cy="96" r="88" stroke="currentColor" stroke-width="6" fill="transparent" stroke-dasharray="553" stroke-dashoffset="0" class="timer-ring-circle" />
+                        </svg>
+                        <div class="text-center z-10">
+                            <div id="timer-display" class="text-4xl font-mono font-bold text-slate-800">00:00</div>
+                            <div id="status-text" class="text-xs text-indigo-500 font-bold uppercase mt-2 tracking-widest">Ready</div>
+                        </div>
+                    </div>
+                    
+                    <div id="manual-text" class="hidden text-slate-400 italic mb-8 py-10">
+                        When you are ready, press Next.
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="p-6 bg-white border-t border-slate-200 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <div class="flex gap-4 max-w-md mx-auto">
+                    <button id="btn-pause" onclick="togglePause()" class="flex-1 bg-white border border-gray-300 text-slate-700 py-3 rounded-xl font-bold shadow-sm active:bg-gray-50 hover:bg-gray-50 transition">
+                        Pause
+                    </button>
+                    <button id="btn-next" onclick="nextStep()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-md active:bg-indigo-700 hover:bg-indigo-700 transition">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-settings" class="absolute inset-0 bg-black/60 z-50 hidden justify-end md:justify-center items-end md:items-center backdrop-blur-sm">
+            <div class="bg-white w-full md:w-[450px] md:rounded-2xl rounded-t-2xl p-6 shadow-2xl animate-slide-up">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-800">Settings</h2>
+                    <button onclick="toggleSettings()" class="text-gray-400 hover:text-gray-800 text-2xl">×</button>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Voice Guide</label>
+                        <select id="voice-select" class="w-full p-3 bg-slate-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500" onchange="saveSettings()">
+                            <option>Loading...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                        <label class="block text-sm font-bold text-indigo-900 mb-2">Background Music (Plays during timer)</label>
+                        <select id="bg-sound-select" class="w-full p-2 mb-3 bg-white border border-indigo-200 rounded-lg text-sm outline-none" onchange="handleSoundSelection()">
+                            <option value="off">Off (Silent)</option>
+                            <option value="https://upload.wikimedia.org/wikipedia/commons/c/c2/Tanpura_G.ogg">Sacred Drone (Tanpura)</option>
+                            <option value="https://upload.wikimedia.org/wikipedia/commons/6/6f/Bansuri_Bamboo_Flute.ogg">Bamboo Flute</option>
+                            <option value="https://upload.wikimedia.org/wikipedia/commons/2/2a/Rain_drops.ogg">Rainfall</option>
+                            <option value="custom">Upload Custom File...</option>
+                        </select>
+                        
+                        <input type="file" id="custom-file-input" class="hidden text-sm text-slate-500" accept="audio/*" onchange="handleFileUpload(this)">
+                        
+                        <div id="sound-preview-box" class="flex items-center gap-2 mt-2 hidden">
+                            <button onclick="previewSound()" class="text-xs bg-indigo-600 text-white px-2 py-1 rounded">▶ Test Audio</button>
+                            <span class="text-xs text-indigo-600 truncate" id="current-sound-name">None</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center pt-2">
+                         <button onclick="toggleSettings()" class="text-indigo-600 font-bold text-sm hover:underline">Close Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+    <footer class="mt-auto py-3 bg-slate-900 text-slate-400 text-center text-xs">
+        <p class="font-bold text-slate-200 mb-1">&copy; 2025 The Guided Wellness</p>
+        <p class="mt-1 ">Developed by <a href="https://www.linkedin.com/in/dharineesh17/" class="hover:text-blue-600" target="_blank" rel="noopener noreferrer">Dharineesh</a></p>
+    </footer>
+
+
+    <audio id="bg-audio" loop></audio>
+
+    <script>
+        // --- 1. DATA ---
+        const guides = [
+            {
+                id: 'shiro-abhyanga',
+                title: 'Shiro Abhyanga',
+                subtitle: 'Ayurvedic Head Massage',
+                icon: '💆‍♀️',
+                color: 'bg-orange-100 text-orange-600',
+                desc: 'Shiro Abhyanga is an Ayurvedic practice involving a full head massage and mild steaming designed to balance the "Tri Doshas," increase energy circulation, and promote deep relaxation.',
+                citation: 'Source: Traditional Ayurveda • Tutorial by Dr. Vasant Lad',
+                tutorialLink: 'https://www.youtube.com/results?search_query=shiro+abhyanga+self+massage',
+                precautions: 'If you have a Pitta-dominant body (high internal heat), scalp acne, sinus problems, or a cough/cold, avoid the hot towel and use a dry towel wrap instead.',
+                prereqs: [
+                    'Coconut Oil (Summer) or Sesame/Amla Oil (Winter)',
+                    'Towel for steaming',
+                    'Hot water source',
+                    'Comfortable chair or mat'
+                ],
+                steps: [
+                    { name: 'Preparation', text: 'Select your oil based on the season. Coconut for cooling, Sesame for warming. Rub 3 drops between your palms to warm it up.' },
+                    { name: 'Apply Oil', text: 'Start by applying the oil throughout the hair, moving from front to back. Tip your head forward to ensure the oil is applied thoroughly.', duration: 40 },
+                    { name: 'Circular Massage', text: 'Using your fingertips, perform circular massages from the front of the head all the way to the back. Repeat this five to six times.', duration: 60 },
+                    { name: 'Spider Fingers', text: 'Move your fingers in a spider-like rhythmic motion down the scalp.', duration: 30 },
+                    { name: 'Hair Pulling', text: 'Gently pull small sections of your hair with light pressure to stimulate the roots.', duration: 30 },
+                    { name: 'Forehead Massage', text: 'Lightly massage the forehead with your fingers to calm the mind and release tension while breathing deeply.', duration: 40 },
+                    { name: 'Eyebrows', text: 'Use two fingers to massage between eyebrows in a circle. Stroke outwards along the brows to relieve eye strain.', duration: 30 },
+                    { name: 'Marma: The Crown', text: 'Locate the Crown point, 12 fingers above the forehead. Massage in circular motions with eyes closed to connect with your Prana.', duration: 45 },
+                    { name: 'Marma: Sensitive Point', text: 'Massage the point 8 fingers above the forehead to help release headaches and improve blood flow.', duration: 30 },
+                    { name: 'Marma: Base of Skull', text: 'Massage the hollow point at the base of the skull. This helps with migraines and oxygen flow.', duration: 40 },
+                    { name: 'Ears & Shoulders', text: 'Rub the ears in circular motions. Then, massage your shoulders to release tension.', duration: 45 },
+                    { name: 'Steaming', text: 'Soak a towel in hot water, wring it out, and wrap it around your head.', duration: 20 },
+                    { name: 'Rest (Shavasana)', text: 'Lie down in Shavasana. Practice deep breathing while the oil soaks in.', duration: 300 } // 5 mins
+                ]
+            },
+            {
+                id: 'ayurvedic-morning',
+                title: '5 AM Morning Routine',
+                subtitle: 'Ayurvedic Dinacharya Routine',
+                icon: '🌅',
+                color: 'bg-orange-100 text-orange-600',
+                desc: 'An Ayurvedic 5 AM morning routine designed to align your body with the natural rhythms of the sun and moon, moving you from a state of "no discipline" to one of deep self-connection.',
+                citation: 'Source: Traditional Ayurveda • Concept: Dinacharya',
+                tutorialLink: 'https://youtu.be/cdfHddWmFfg?si=rG8Ib3ttK-bgRuOU',
+                precautions: 'If you have knee issues, avoid the Malasana (deep squat) and sit on a chair instead. Perform Jal Neti only if you have learned the proper technique.',
+                notes: [
+                    'This routine is best performed between 4:30 AM and 6:30 AM, ideally before sunrise.',
+                    'When you wake up in the morning, rub your hands together and place them over your eyes to make your system come awake.',
+                    'When you wake up, roll to your right side first and then slowly get up. This helps to protect the heart energy.',
+                    'When you walk barefoot on grass (Earthing) to receive refreshing energy.',
+                    'Learn and practice proper breathing techniques like Kapalbhati and Nadi Shodhana for optimal benefits.',
+                    'Take shower on cold water or lukewarm water for better blood circulation and health.'
+                ],
+                prereqs: [
+                    'Copper vessel with water (stored overnight to aid detoxification)',
+                    'Coconut Oil for pulling',
+                    'Tooth powder & Tongue scraper',
+                    'Soaked almonds & prunes',
+                    'Yoga mat', 'Tulsi leaf for consumption'
+                ],
+                steps: [
+                    { 
+                        name: 'Gentle Awakening', 
+                        text: 'Do not rush. Sit on your bed for a moment. Feel your body and express gratitude for the new day.', 
+                        duration: 120 
+                    },
+                    { 
+                        name: 'Grounding & Air', 
+                        text: 'Touch the ground to seek blessings from Mother Earth. Open your windows immediately to connect with the morning moon and fresh air.', 
+                        duration: 60 
+                    },
+                    { 
+                        name: 'Sensory Cleansing', 
+                        text: 'Splash cold water on your face and eyes to gently wake up your senses. Sniff water into one nostril while closing the other, then exhale forcefully (as in Kapalbhati) to clear your breathing.', 
+                        duration: 120 
+                    },
+                    { 
+                        name: 'Lymphatic Tapping', 
+                        text: 'Tap your body gently and massage your abdomen to boost blood circulation and prepare for elimination.', 
+                        duration: 60 
+                    },
+                    { 
+                        name: 'Copper Water', 
+                        text: 'Sit in Malasana (deep squat). Drink the luke warm water.', 
+                        duration: 120 
+                    },
+                    { 
+                        name: 'Oil Pulling & Planning', 
+                        text: 'Swish coconut oil in your mouth. While you do this, mentally plan your daily schedule.', 
+                        duration: 300 
+                    },
+                    { 
+                        name: 'Oral Hygiene', 
+                        text: 'Spit the oil. Clean your mouth with your finger, brush with tooth powder, and use a tongue scraper to remove morning toxins.', 
+                        duration: 180 
+                    },
+                    { 
+                        name: 'Nature Connection', 
+                        text: 'Walk or running or cycling. Consume a Tulsi leaf.', 
+                        duration: 600 
+                    },
+                    { 
+                        name: 'Bathe & Dress', 
+                        text: 'If you want to shower, pause it here; otherwise, continue.', 
+                        duration: 660 
+                    },
+                    { 
+                        name: 'Movement (Surya Namaskar)', 
+                        text: 'Engage in 10 minutes of physical activity or Sun Salutations to open up your joints.', 
+                        duration: 600 
+                    },
+                    { 
+                        name: 'Breathwork (Kriyas)', 
+                        text: 'perform Nadi Shodhana (alternate nostril breathing) to balance your energy channels.', //Practice Kapalbhati (forceful exhale) and Anulom Vilom to clear respiratory paths and gain mental clarity.
+                        duration: 720 
+                    },
+                    { 
+                        name: 'Ayurvedic Nutrition', 
+                        text: 'Conclude by eating your soaked almonds and nuts for gut health.', 
+                        duration: 60 
+                    }
+                ]
+            },
+            {
+                id: '7-min-meditation',
+                title: '7-Minute Meditation',
+                subtitle: 'Mindful Pause',
+                icon: '🧘‍♂️',
+                color: 'bg-teal-100 text-teal-600',
+                desc: 'A short, effective session designed to reset your nervous system, clear mental clutter, and bring you back to the present moment.',
+                citation: 'Technique: Mindfulness-Based Stress Reduction (MBSR)',
+                tutorialLink: 'https://www.youtube.com/results?search_query=7+minute+guided+meditation',
+                precautions: 'If you feel dizzy during deep breathing, return to your normal breath rhythm immediately.',
+                notes: 'Find a quiet space where you won\'t be disturbed. Sit comfortably with your back straight but relaxed. You may use a cushion or chair as needed.',
+                prereqs: [
+                    'A quiet space',
+                    'Comfortable chair or cushion',
+                    'Headphones (recommended)'
+                ],
+                steps: [
+                    { 
+                        name: 'Instruction', 
+                        text: 'sit comfortably. Rest your open hands on your lap. slightly upturn face with mild focus between eyebrows. with each inhalation take the thought as i am not the the body. with each exhalation take the thought as i am not even the mind. open your eyes after 30 seconds. we keep the timer for you. please close your eyes now and begin.', 
+                        duration: 3 
+                    }
+                ]
+            },
+            {
+                id: 'om-chant',
+                title: 'Om Chanting',
+                subtitle: 'Vibration Meditation',
+                icon: '🕉️',
+                color: 'bg-indigo-100 text-indigo-600',
+                desc: 'A simple practice to tune into the universal sound and create inner resonance.',
+                citation: 'Source: Yoga Sutras of Patanjali',
+                tutorialLink: '#',
+                precautions: 'Ensure your spine is erect. Do not strain your voice.',
+                prereqs: ['Quiet Space', 'Yoga Mat'],
+                steps: [
+                    { name: 'Posture', text: 'Sit in a comfortable cross-legged position. Keep your spine straight. Hands in Chin Mudra.', duration: 0 },
+                    { name: 'Preparation', text: 'Take a deep breath in, filling your lungs completely.', duration: 10 },
+                    { name: 'Chant', text: 'Exhale with the sound Ommmmm. Feel the vibration.', duration: 15 },
+                    { name: 'Silence', text: 'Sit in silence and observe the resonance.', duration: 15 }
+                ]
+            },
+            {
+                id: 'morning-habit',
+                title: 'Morning Routine',
+                subtitle: 'Dinacharya',
+                icon: '☀️',
+                color: 'bg-yellow-100 text-yellow-600',
+                desc: 'Align your biological clock with nature using these Vedic morning habits.',
+                citation: 'Source: Ashtanga Hridayam',
+                tutorialLink: '#',
+                precautions: 'None',
+                prereqs: ['Copper Water Vessel', 'Tongue Scraper'],
+                steps: [
+                    { name: 'Wake Up', text: 'Wake up before sunrise. Express gratitude.', duration: 10 },
+                    { name: 'Hydrate', text: 'Drink water stored in a copper vessel overnight.', duration: 30 },
+                    { name: 'Cleanse', text: 'Splash your face with cold water 7 times.', duration: 30 }
+                ]
+            }
+        ];
+
+        // --- 2. STATE ---
+        let appState = { 
+            voiceURI: null,
+            bgSoundUrl: 'off',
+            bgSoundName: 'Off'
+        };
+        
+        let currentRoutine = null;
+        let stepIndex = 0;
+        let timerInterval = null;
+        let timeLeft = 0;
+        let isPaused = false;
+        
+        const synth = window.speechSynthesis;
+        const bgAudio = document.getElementById('bg-audio');
+        let voices = [];
+
+        // --- 3. INIT ---
+        window.addEventListener('DOMContentLoaded', () => {
+            renderDashboard();
+            loadSettings(); 
+            
+            if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoices;
+            populateVoices();
+
+            document.getElementById('btn-start').addEventListener('click', startSession);
+            
+            // PWA Install Prompt
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('pwa-install');
+                btn.classList.remove('hidden');
+                btn.onclick = () => e.prompt();
+            });
+        });
+
+        // --- 4. NAVIGATION ---
+        function goBack() {
+            document.getElementById('view-details').style.transform = 'translateX(100%)';
+        }
+
+        function toggleSettings() {
+            const el = document.getElementById('view-settings');
+            el.classList.toggle('hidden');
+            el.classList.toggle('flex');
+        }
+
+        // --- 5. RENDER DASHBOARD ---
+        // --- 5.1 HELPERS ---
+        function formatTotalTime(seconds) {
+            if (!seconds || seconds === 0) return 'Self-paced';
+
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+
+            // Logic to display relevant parts based on duration length
+            if (h > 0) {
+                return `${h} hr ${m} min ${s} sec`;
+            } else if (m > 0) {
+                return `${m} min ${s} sec`;
+            } else {
+                return `${s} sec`;
+            }
+        }
+
+        function renderDashboard() {
+            const grid = document.getElementById('cards-grid');
+            grid.innerHTML = '';
+            guides.forEach(guide => {
+                
+                const totalSeconds = guide.steps.reduce((acc, step) => {
+                    // If step.duration is undefined/null, treat it as 0
+                    return acc + (step.duration || 0); 
+                }, 0);
+                console.log('Total Seconds for', guide.title, ':', totalSeconds);
+                const durationStr = formatTotalTime(totalSeconds);
+                console.log('Duration String for', guide.title, ':', durationStr);
+                const card = document.createElement('div');
+                card.className = 'modern-card p-5 cursor-pointer hover:shadow-md flex flex-col justify-between min-h-[150px]';
+                card.onclick = () => showDetails(guide);
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-4xl p-2 rounded-xl ${guide.color.split(' ')[0]}">${guide.icon}</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-800 leading-tight">${guide.title}</h3>
+                        <p class="text-xs text-slate-500 font-medium">${guide.subtitle}</p>
+                    
+                        <div class="flex items-center gap-2 mt-3">
+                            <span class="px-2 py-1 rounded text-[11px] text-[11px] text-slate-400">${guide.steps.length} Steps</span>
+                             <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[11px] font-bold flex items-center gap-1 justify-end">
+                                ⏱ ${durationStr}
+                             </span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function showDetails(guide) {
+            currentRoutine = guide;
+            const content = document.getElementById('detail-content');
+            
+            const prereqs = guide.prereqs.map(p => `<li class="flex items-start gap-2"><span class="text-indigo-500 font-bold">•</span> ${p}</li>`).join('');
+            const steps = guide.steps.map((s,i) => `<div class="flex gap-3 text-sm py-2 border-b border-gray-50 last:border-0"><span class="font-bold text-slate-400 w-5">${i+1}.</span> <span>${s.name}</span> <span class="ml-auto text-xs text-slate-400 bg-slate-50 px-2 rounded">${s.duration > 0 ? s.duration + 's' : 'Manual'}</span></div>`).join('');
+
+            content.innerHTML = `
+                <div class="mb-6">
+                    <div class="text-6xl mb-4">${guide.icon}</div>
+                    <h1 class="text-3xl font-bold text-slate-900 leading-tight mb-2">${guide.title}</h1>
+                    <p class="text-slate-600 leading-relaxed">${guide.desc}</p>
+                </div>
+
+                <div class="bg-green-50 border border-green-100 p-4 rounded-xl mb-3">
+                        <h3 class="text-xs font-bold uppercase text-green-800 mb-2">Notes</h3>
+                        <p class="text-sm text-green-700">${guide.notes}</p>
+                    </div>
+
+                <div class="space-y-6">
+                    <div class="bg-gray-50 border border-gray-200 p-3 rounded-lg text-xs text-gray-500">
+                        <p class="font-bold text-gray-700 mb-1">Information</p>
+                        <p>${guide.citation}</p>
+                        <a href="${guide.tutorialLink}" target="_blank" class="text-indigo-600 hover:underline mt-1 block font-bold">Watch Video Tutorial ↗</a>
+                    </div>
+
+                    <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl">
+                        <h3 class="text-xs font-bold uppercase text-indigo-900 mb-2">Checklist</h3>
+                        <ul class="text-sm text-indigo-900 space-y-1 list-none">${prereqs}</ul>
+                    </div>
+
+                    <div class="bg-red-50 border border-red-100 p-4 rounded-xl">
+                        <h3 class="text-xs font-bold uppercase text-red-800 mb-2">Precautions</h3>
+                        <p class="text-sm text-red-700">${guide.precautions}</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Routine Overview</h3>
+                        <div class="bg-white border border-gray-100 p-4 rounded-xl shadow-sm">
+                            ${steps}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('view-details').style.transform = 'translateX(0)';
+        }
+
+        // --- 6. PLAYER LOGIC ---
+        function startSession() {
+            stepIndex = 0;
+            document.getElementById('view-player').classList.remove('hidden');
+            document.getElementById('view-player').classList.add('flex');
+            runStep();
+        }
+
+        function endSession() {
+            synth.cancel();
+            clearInterval(timerInterval);
+            stopBgAudio();
+            document.getElementById('view-player').classList.add('hidden');
+            document.getElementById('view-player').classList.remove('flex');
+        }
+
+        function runStep() {
+            if (stepIndex >= currentRoutine.steps.length) {
+                endSession();
+                if (currentRoutine.id === '7-min-meditation') {
+                    // play audio cue
+                    const audioBell = new Audio('./assets/mixkit-happy-bell-alert-601.wav');
+                    audioBell.play();
+                    //alert("Well done on completing your meditation! Take this calm energy into the rest of your day.");
+                } else {
+                    alert("Session Complete! Great job.");
+                }
+            }
+
+            const step = currentRoutine.steps[stepIndex];
+            
+            // UI Reset
+            document.getElementById('step-title').innerText = step.name;
+            document.getElementById('step-text').innerText = step.text;
+            document.getElementById('step-progress-bar').style.width = `${((stepIndex)/currentRoutine.steps.length)*100}%`;
+            
+            clearInterval(timerInterval);
+            pauseBgAudio(); // Stop audio from previous step first
+            
+            isPaused = false;
+            document.getElementById('btn-pause').innerText = "Pause";
+            
+            // Speak text first
+            speak(step.text, () => {
+                // Speech finished.
+                // Does this step have a duration?
+                if (step.duration && step.duration > 0) {
+                    initTimer(step.duration, stepIndex);
+                } else {
+                    // Manual Step
+                    document.getElementById('timer-container').classList.add('hidden');
+                    document.getElementById('manual-text').classList.remove('hidden');
+                }
+            });
+        }
+
+        function initTimer(duration, stepIdx) {
+            document.getElementById('timer-container').classList.remove('hidden');
+            document.getElementById('manual-text').classList.add('hidden');
+            document.getElementById('status-text').innerText = "Prepare...";
+            
+            // 3 Second Buffer before timer starts
+            let buffer = 3;
+            const bufferInt = setInterval(() => {
+                if (isPaused) return; 
+                
+                document.getElementById('status-text').innerText = `Starting in ${buffer}...`;
+                buffer--;
+                if (buffer < 0) {
+                    clearInterval(bufferInt);
+                    // Start actual timer
+                    document.getElementById('status-text').innerText = "Active";
+                    // playBgAudio(); // Start Music
+                    if (stepIdx === 0) {
+                        playBgAudio(); // Start Music 
+                    } else {
+                        bgAudio.play(); // Resume Music
+                    }
+                    startTimerCountdown(duration);
+                }
+            }, 1000);
+        }
+
+        function startTimerCountdown(duration) {
+            timeLeft = duration;
+            updateTimerUI(timeLeft, duration);
+
+            timerInterval = setInterval(() => {
+                if (!isPaused) {
+                    timeLeft--;
+                    updateTimerUI(timeLeft, duration);
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        nextStep();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI(current, total) {
+            const m = Math.floor(current / 60);
+            const s = current % 60;
+            document.getElementById('timer-display').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            
+            const circle = document.getElementById('timer-ring');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            const offset = circumference - ((current / total) * circumference);
+            circle.style.strokeDashoffset = offset;
+        }
+
+        // --- 7. CONTROLS ---
+        function togglePause() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('btn-pause');
+            
+            if (isPaused) {
+                synth.pause();
+                bgAudio.pause();
+                btn.innerText = "Resume";
+                document.getElementById('status-text').innerText = "Paused";
+            } else {
+                synth.resume();
+                if(timeLeft > 0) bgAudio.play();
+                btn.innerText = "Pause";
+                document.getElementById('status-text').innerText = "Active";
+            }
+        }
+
+        function nextStep() {
+            synth.cancel();
+            clearInterval(timerInterval);
+            // stopBgAudio();
+            // bgAudio.pause();
+            stepIndex++;
+            runStep();
+        }
+
+        // --- 8. AUDIO & SETTINGS ---
+        function handleSoundSelection() {
+            const select = document.getElementById('bg-sound-select');
+            const val = select.value;
+
+            if (val === 'custom') {
+                document.getElementById('custom-file-input').classList.remove('hidden');
+                document.getElementById('custom-file-input').click();
+            } else {
+                document.getElementById('custom-file-input').classList.add('hidden');
+                appState.bgSoundUrl = val;
+                appState.bgSoundName = select.options[select.selectedIndex].text;
+                updateAudioPreview();
+                saveSettings();
+            }
+        }
+
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                appState.bgSoundUrl = url;
+                appState.bgSoundName = file.name;
+                updateAudioPreview();
+            }
+        }
+
+        function updateAudioPreview() {
+            const box = document.getElementById('sound-preview-box');
+            if (appState.bgSoundUrl !== 'off') {
+                box.classList.remove('hidden');
+                document.getElementById('current-sound-name').innerText = appState.bgSoundName;
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        function previewSound() {
+            bgAudio.src = appState.bgSoundUrl;
+            bgAudio.play();
+            setTimeout(() => bgAudio.pause(), 5000); 
+        }
+
+        function playBgAudio() {
+            if (appState.bgSoundUrl && appState.bgSoundUrl !== 'off') {
+                bgAudio.src = appState.bgSoundUrl;
+                bgAudio.volume = 0.4;
+                bgAudio.play().catch(e => console.log("Audio play failed (interaction needed)", e));
+            }
+        }
+
+        function stopBgAudio() {
+            bgAudio.pause();
+            bgAudio.currentTime = 0;
+        }
+
+        function pauseBgAudio() {
+            bgAudio.pause();
+        }
+
+        function play2BgAudio() {
+            bgAudio.play();
+        }
+
+        // --- 9. UTILS ---
+        function speak(text, callback) {
+            if (!text) { callback(); return; }
+            
+            synth.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (appState.voiceURI) {
+                utterance.voice = voices.find(v => v.voiceURI === appState.voiceURI);
+            }
+            utterance.rate = 0.9;
+            utterance.onend = callback;
+            synth.speak(utterance);
+        }
+
+        function populateVoices() {
+            voices = synth.getVoices();
+            const select = document.getElementById('voice-select');
+            select.innerHTML = '';
+            
+            // Priority: Indian English > Other English
+            voices.sort((a,b) => {
+                const aIn = a.lang.includes('IN');
+                const bIn = b.lang.includes('IN');
+                if(aIn && !bIn) return -1;
+                if(!aIn && bIn) return 1;
+                return 0;
+            });
+
+            voices.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.voiceURI;
+                opt.text = `${v.name} (${v.lang})`;
+                select.appendChild(opt);
+            });
+            
+            if(appState.voiceURI) select.value = appState.voiceURI;
+        }
+
+        function saveSettings() {
+            appState.voiceURI = document.getElementById('voice-select').value;
+            // Only save standard URLs to localstorage
+           // if (!appState.bgSoundUrl.startsWith('blob:')) {
+           //     
+           // }
+            localStorage.setItem('echoSettings', JSON.stringify({
+                    voice: appState.voiceURI,
+                    sound: appState.bgSoundUrl
+                }));
+        }
+
+        function loadSettings() {
+            const data = localStorage.getItem('echoSettings');
+            if (data) {
+                const parsed = JSON.parse(data);
+                appState.voiceURI = parsed.voice;
+                appState.bgSoundUrl = parsed.sound || 'off';
+                
+                const soundSelect = document.getElementById('bg-sound-select');
+                if (['off', 'custom'].includes(appState.bgSoundUrl) || appState.bgSoundUrl.startsWith('http')) {
+                   soundSelect.value = appState.bgSoundUrl;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
