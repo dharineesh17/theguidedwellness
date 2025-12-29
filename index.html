@@ -462,6 +462,7 @@
             currentRoutine = guide;
             const content = document.getElementById('detail-content');
             
+            const notes = guide.notes.map(p => `<li class="flex items-start gap-2"><span class="text-indigo-500 font-bold">•</span> ${p}</li>`).join('');
             const prereqs = guide.prereqs.map(p => `<li class="flex items-start gap-2"><span class="text-indigo-500 font-bold">•</span> ${p}</li>`).join('');
             const steps = guide.steps.map((s,i) => `<div class="flex gap-3 text-sm py-2 border-b border-gray-50 last:border-0"><span class="font-bold text-slate-400 w-5">${i+1}.</span> <span>${s.name}</span> <span class="ml-auto text-xs text-slate-400 bg-slate-50 px-2 rounded">${s.duration > 0 ? s.duration + 's' : 'Manual'}</span></div>`).join('');
 
@@ -474,7 +475,7 @@
 
                 <div class="bg-green-50 border border-green-100 p-4 rounded-xl mb-3">
                         <h3 class="text-xs font-bold uppercase text-green-800 mb-2">Notes</h3>
-                        <p class="text-sm text-green-700">${guide.notes}</p>
+                        <p class="text-sm text-green-700">${notes}</p>
                     </div>
 
                 <div class="space-y-6">

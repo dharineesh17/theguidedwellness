@@ -1,6 +1,6 @@
 {
-  "name": "Echo Wellness",
-  "short_name": "Echo",
+  "name": "The Guided Wellness",
+  "short_name": "Guided Wellness",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
