@@ -1,4 +1,4 @@
-const CACHE_NAME = 'echo-wellness-v1';
+const CACHE_NAME = 'guided-wellness-cache-v1';
 const ASSETS = [
   './index.html',
   './manifest.json',
